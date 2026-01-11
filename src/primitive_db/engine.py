@@ -14,7 +14,13 @@ from src.primitive_db.core import (
     update_rows,
 )
 from src.primitive_db.parser import parse_clause, parse_values
-from src.primitive_db.utils import META_FILE, load_metadata, load_table_data, save_metadata, save_table_data
+from src.primitive_db.utils import (
+    META_FILE,
+    load_metadata,
+    load_table_data,
+    save_metadata,
+    save_table_data,
+)
 
 
 def print_help() -> None:
@@ -25,10 +31,16 @@ def print_help() -> None:
     print("<command> drop_table <имя_таблицы> - удалить таблицу\n")
 
     print("CRUD:")
-    print('<command> insert into <имя_таблицы> values ("text", 1, true) - создать запись')
+    print(
+       '<command> insert into <имя_таблицы> values ("text", 1, true) - создать запись'
+)
     print("<command> select from <имя_таблицы> - прочитать все записи")
-    print("<command> select from <имя_таблицы> where <col> = <val> - прочитать по условию")
-    print("<command> update <имя_таблицы> set <col> = <val> where <col> = <val> - обновить")
+    print(
+       "<command> select from <имя_таблицы> where <col> = <val> - прочитать по условию"
+)
+    print(
+       "<command> update <имя_таблицы> set <col> = <val> where <col> = <val> - обновить"
+)
     print("<command> delete from <имя_таблицы> where <col> = <val> - удалить\n")
 
     print("Общие команды:")
@@ -216,7 +228,9 @@ def welcome() -> None:
             save_table_data(table_name, new_data)
 
             if len(ids) == 1:
-                print(f'Запись с ID={ids[0]} в таблице "{table_name}" успешно обновлена.')
+                print(
+                    f'Запись с ID={ids[0]} в таблице "{table_name}" успешно обновлена.'
+                )
             elif len(ids) > 1:
                 print(f'Обновлено записей: {len(ids)} в таблице "{table_name}".')
             else:
@@ -255,7 +269,9 @@ def welcome() -> None:
             save_table_data(table_name, new_data)
 
             if len(ids) == 1:
-                print(f'Запись с ID={ids[0]} успешно удалена из таблицы "{table_name}".')
+                print(
+                      f'Запись с ID={ids[0]} успешно удалена из таблицы "{table_name}".'
+                     )
             elif len(ids) > 1:
                 print(f'Удалено записей: {len(ids)} из таблицы "{table_name}".')
             else:

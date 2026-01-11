@@ -28,7 +28,10 @@ def _schema_map(schema: list[dict]) -> dict[str, str]:
     return {c["name"]: c["type"] for c in schema}
 
 
-def create_table(metadata: dict, table_name: str, columns: list[tuple[str, str]]) -> dict:
+def create_table(metadata: dict,
+                 table_name: str,
+                 columns: list[tuple[str, str]]
+) -> dict:
     """Create table metadata. Adds ID:int automatically as first column."""
     if table_name in metadata:
         print(f'Ошибка: Таблица "{table_name}" уже существует.')
@@ -68,7 +71,11 @@ def list_tables(metadata: dict) -> None:
         print(f"- {name}")
 
 
-def insert(metadata: dict, table_name: str, table_data: list[dict], values_raw: list[str]) -> list[dict]:
+def insert(metadata: dict,
+           table_name: str,
+           table_data: list[dict],
+           values_raw: list[str]
+) -> list[dict]:
     """Insert row into table_data. values_raw does not include ID."""
     if table_name not in metadata:
         print(f'Ошибка: Таблица "{table_name}" не существует.')
@@ -80,7 +87,9 @@ def insert(metadata: dict, table_name: str, table_data: list[dict], values_raw: 
 
     expected = len(cols) - 1
     if len(values_raw) != expected:
-        print(f"Некорректное значение: ожидается {expected} значений. Попробуйте снова.")
+        print(
+            f"Некорректное значение: ожидается {expected} значений. Попробуйте снова."
+        )
         return table_data
 
     new_id = 1
@@ -100,7 +109,10 @@ def insert(metadata: dict, table_name: str, table_data: list[dict], values_raw: 
     return table_data
 
 
-def select_rows(schema: list[dict], table_data: list[dict], where_clause: dict | None = None) -> list[dict]:
+def select_rows(schema: list[dict],
+                table_data: list[dict],
+                where_clause: dict | None = None
+) -> list[dict]:
     """Return rows filtered by typed where_clause."""
     if where_clause is None:
         return list(table_data)
@@ -143,7 +155,10 @@ def update_rows(
     return table_data, updated
 
 
-def delete_rows(schema: list[dict], table_data: list[dict], where_clause: dict) -> tuple[list[dict], list[int]]:
+def delete_rows(schema: list[dict],
+                table_data: list[dict],
+                where_clause: dict
+) -> tuple[list[dict], list[int]]:
     """Delete rows and return (new_data, deleted_ids). Clause is typed."""
     (wcol, wval), = where_clause.items()
 
