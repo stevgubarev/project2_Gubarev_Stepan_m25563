@@ -13,6 +13,7 @@ from src.primitive_db.core import (
     select_rows,
     update_rows,
 )
+from src.primitive_db.decorators import create_cacher
 from src.primitive_db.parser import parse_clause, parse_values
 from src.primitive_db.utils import (
     META_FILE,
@@ -21,6 +22,8 @@ from src.primitive_db.utils import (
     save_metadata,
     save_table_data,
 )
+
+SELECT_CACHE = create_cacher()
 
 
 def print_help() -> None:
@@ -32,15 +35,16 @@ def print_help() -> None:
 
     print("CRUD:")
     print(
-       '<command> insert into <имя_таблицы> values ("text", 1, true) - создать запись'
-)
+        '<command> insert into <имя_таблицы> values ("text", 1, true) - создать запись'
+    )
     print("<command> select from <имя_таблицы> - прочитать все записи")
     print(
-       "<command> select from <имя_таблицы> where <col> = <val> - прочитать по условию"
-)
+        "<command> select from <имя_таблицы> where <col> = <val> - прочитать по условию"
+    )
     print(
-       "<command> update <имя_таблицы> set <col> = <val> where <col> = <val> - обновить"
-)
+        "<command> update <имя_таблицы> set <col> = <val> "
+        "where <col> = <val> - обновить"
+    )
     print("<command> delete from <имя_таблицы> where <col> = <val> - удалить\n")
 
     print("Общие команды:")
@@ -49,12 +53,12 @@ def print_help() -> None:
 
 
 def _print_table(schema: list[dict], rows: list[dict]) -> None:
-    t = PrettyTable()
+    table = PrettyTable()
     columns = [c["name"] for c in schema]
-    t.field_names = columns
-    for r in rows:
-        t.add_row([r.get(col) for col in columns])
-    print(t)
+    table.field_names = columns
+    for row in rows:
+        table.add_row([row.get(col) for col in columns])
+    print(table)
 
 
 def welcome() -> None:
@@ -68,6 +72,7 @@ def welcome() -> None:
 
         if user_input == "exit":
             return
+
         if user_input == "help":
             print_help()
             continue
@@ -138,7 +143,7 @@ def welcome() -> None:
                 print(f"Некорректное значение: {user_input}. Попробуйте снова.")
                 continue
 
-            values_part = user_input[idx + len(" values "):].strip()
+            values_part = user_input[idx + len(" values ") :].strip()
             try:
                 values_raw = parse_values(values_part)
             except ValueError as e:
@@ -161,10 +166,13 @@ def welcome() -> None:
             table_data = load_table_data(table_name)
 
             where_typed = None
+            where_text = ""
+
             if len(args) > 3:
                 if args[3] != "where":
                     print(f"Функции {cmd} нет. Попробуйте снова.")
                     continue
+
                 where_text = user_input.split(" where ", 1)[1].strip()
                 try:
                     raw_where = parse_clause(where_text)
@@ -177,9 +185,15 @@ def welcome() -> None:
                 if col not in types:
                     print(f"Ошибка: Таблица или столбец {col} не найден.")
                     continue
+
                 where_typed = {col: cast_value(raw_val, types[col])}
 
-            rows = select_rows(schema, table_data, where_typed)
+            cache_key = (table_name, where_text, len(table_data))
+
+            def compute():
+                return select_rows(schema, table_data, where_typed)
+
+            rows = SELECT_CACHE(cache_key, compute)
             _print_table(schema, rows)
             continue
 
@@ -199,8 +213,8 @@ def welcome() -> None:
                 print(f"Некорректное значение: {user_input}. Попробуйте снова.")
                 continue
 
-            set_text = user_input[idx_set + len(" set "):idx_where].strip()
-            where_text = user_input[idx_where + len(" where "):].strip()
+            set_text = user_input[idx_set + len(" set ") : idx_where].strip()
+            where_text = user_input[idx_where + len(" where ") :].strip()
 
             try:
                 raw_set = parse_clause(set_text)
@@ -245,6 +259,7 @@ def welcome() -> None:
                 continue
 
             schema = metadata[table_name]
+
             if " where " not in user_input.lower():
                 print(f"Некорректное значение: {user_input}. Попробуйте снова.")
                 continue
@@ -258,6 +273,7 @@ def welcome() -> None:
 
             types = {c["name"]: c["type"] for c in schema}
             (wcol, wraw), = raw_where.items()
+
             if wcol not in types:
                 print(f"Ошибка: Таблица или столбец {wcol} не найден.")
                 continue
@@ -270,8 +286,8 @@ def welcome() -> None:
 
             if len(ids) == 1:
                 print(
-                      f'Запись с ID={ids[0]} успешно удалена из таблицы "{table_name}".'
-                     )
+                    f'Запись с ID={ids[0]} успешно удалена из таблицы "{table_name}".'
+                )
             elif len(ids) > 1:
                 print(f'Удалено записей: {len(ids)} из таблицы "{table_name}".')
             else:
