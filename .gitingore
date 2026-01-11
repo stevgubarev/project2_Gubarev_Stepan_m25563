@@ -1,0 +1,4 @@
+data/
+db_meta.json
+__pycache__/
+
